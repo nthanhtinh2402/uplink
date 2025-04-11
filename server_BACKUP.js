@@ -106,7 +106,7 @@ async function clickAndDownload(page) {
         const requestUrl = request.url();
         if (requestUrl.includes('https://') && request.resourceType() === 'document') {
             console.log(`⛔ Hủy tải xuống: ${requestUrl}`);
-            downloadLink = <a>${requestUrl} </a>;
+            downloadLink = ${requestUrl};
             request.abort();
         } else {
             request.continue();
