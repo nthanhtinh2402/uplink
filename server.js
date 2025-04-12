@@ -5,7 +5,7 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const clipboardy = require('clipboardy');
 const crypto = require('crypto');
 const url = require('url');
-const ora = require('ora').default;
+const ora = require('ora');
 const cliProgress = require('cli-progress');
 
 puppeteer.use(StealthPlugin());
