@@ -2,7 +2,6 @@ import 'dotenv/config';  // Thay cho require('dotenv').config();
 import express from 'express';
 import puppeteer from 'puppeteer-extra';
 import StealthPlugin from 'puppeteer-extra-plugin-stealth';
-import clipboardy from 'clipboardy';
 import crypto from 'crypto';
 import url from 'url';
 import ora from 'ora';
