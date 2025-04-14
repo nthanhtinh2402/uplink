@@ -25,58 +25,70 @@ function generateHashFromUrl(productUrl) {
 }
 
 function parseProductUrl(productUrl) {
-    const parsedUrl = url.parse(productUrl);
+    const parsedUrl = new URL(productUrl);
     console.log('Parsed URL:', parsedUrl);
     return parsedUrl;
 }
 
 async function loginIfNeeded(page) {
-    const spinner = ora('🔐 Đang kiểm tra đăng nhập...').start();
+    const spinner = ora('🔐 Checking login status...').start();
 
     try {
-        await page.goto('https://elements.envato.com/sign-in', { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto('https://elements.envato.com/sign-in', { 
+            waitUntil: 'domcontentloaded', 
+            timeout: 60000 
+        });
 
         const isLoggedIn = await page.$('a[href="/profile"]');
         if (isLoggedIn) {
-            spinner.succeed('✅ Đã đăng nhập!');
+            spinner.succeed('✅ Already logged in!');
             return true;
         }
 
-        spinner.text = '🔑 Đang nhập thông tin đăng nhập...';
-        await page.waitForSelector('input[name="username"]', { visible: true, timeout: 10000 });
+        spinner.text = '🔑 Entering login credentials...';
+        await page.waitForSelector('input[name="username"]', { 
+            visible: true, 
+            timeout: 10000 
+        });
+        
         const username = process.env.ENVATO_USERNAME;
         const password = process.env.ENVATO_PASSWORD;
 
-        if (!username || !password) throw new Error("Thiếu ENVATO_USERNAME hoặc ENVATO_PASSWORD trong .env");
+        if (!username || !password) {
+            throw new Error("Missing ENVATO_USERNAME or ENVATO_PASSWORD in .env");
+        }
 
         await page.type('input[name="username"]', username, { delay: 60 });
-        await page.waitForSelector('input[name="password"]', { visible: true, timeout: 10000 });
+        await page.waitForSelector('input[name="password"]', { 
+            visible: true, 
+            timeout: 10000 
+        });
         await page.type('input[name="password"]', password, { delay: 60 });
 
         await page.keyboard.press('Enter');
-        await page.waitForNavigation({ waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.waitForNavigation({ 
+            waitUntil: 'domcontentloaded', 
+            timeout: 60000 
+        });
 
-        spinner.succeed('✅ Đăng nhập thành công!');
+        spinner.succeed('✅ Login successful!');
         return true;
     } catch (error) {
-        spinner.fail('❌ Lỗi khi đăng nhập!');
+        spinner.fail('❌ Login failed!');
         console.error("Login error:", error);
         return false;
     }
 }
 
-// 🧠 Enhanced AI OCR Function
 async function autoClickByText(page, textVariations = ['Download', 'Tải xuống', 'Download Now']) {
-    const spinner = ora('🤖 Đang sử dụng AI để nhận diện nút...').start();
+    const spinner = ora('🤖 Using AI to detect button...').start();
     
     try {
-        // Capture and pre-process screenshot
         const screenshotBuffer = await page.screenshot({ 
             fullPage: true,
             encoding: 'binary'
         });
 
-        // Image processing for better OCR accuracy
         const processedImage = await sharp(screenshotBuffer)
             .greyscale()
             .normalise()
@@ -85,7 +97,6 @@ async function autoClickByText(page, textVariations = ['Download', 'Tải xuốn
             .threshold(150)
             .toBuffer();
 
-        // OCR with optimized configuration
         const { data: { words } } = await Tesseract.recognize(processedImage, 'eng', {
             logger: m => spinner.text = `🤖 ${m.status} (${Math.round(m.progress * 100)}%)`,
             tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789',
@@ -94,7 +105,6 @@ async function autoClickByText(page, textVariations = ['Download', 'Tải xuốn
             tessedit_ocr_engine_mode: '3'
         });
 
-        // Try each text variation
         for (const text of textVariations) {
             const matches = words.filter(w => 
                 w.text.toLowerCase().includes(text.toLowerCase()) && 
@@ -120,15 +130,15 @@ async function autoClickByText(page, textVariations = ['Download', 'Tải xuốn
                 await new Promise(resolve => setTimeout(resolve, 500));
                 await page.mouse.click(x, y);
                 
-                spinner.succeed(`✅ Đã nhận diện và click '${bestMatch.text}' (Độ chính xác: ${bestMatch.confidence}%)`);
+                spinner.succeed(`✅ Detected and clicked '${bestMatch.text}' (Accuracy: ${bestMatch.confidence}%)`);
                 return true;
             }
         }
         
-        spinner.fail("❌ Không thể tìm thấy nút phù hợp");
+        spinner.fail("❌ Couldn't find matching button");
         return false;
     } catch (error) {
-        spinner.fail('❌ Lỗi trong quá trình nhận diện AI');
+        spinner.fail('❌ AI detection error');
         console.error("OCR Error:", error);
         return false;
     }
@@ -136,7 +146,7 @@ async function autoClickByText(page, textVariations = ['Download', 'Tải xuốn
 
 async function clickAndDownload(page) {
     let downloadLink = null;
-    const spinner = ora('📦 Đang xử lý nút tải xuống...').start();
+    const spinner = ora('📦 Processing download button...').start();
     let responseListener, requestListener;
 
     try {
@@ -150,35 +160,33 @@ async function clickAndDownload(page) {
             'button:has-text("Download")'
         ];
 
-        // Try standard selectors first
         for (let sel of selectors) {
             try {
                 const btn = await page.$(sel);
                 if (btn) {
                     await btn.click();
                     found = true;
-                    spinner.text = `📦 Đã tìm thấy nút bằng selector: ${sel}`;
+                    spinner.text = `📦 Found button using selector: ${sel}`;
                     break;
                 }
             } catch (error) {
-                console.log(`Không thể click bằng selector ${sel}:`, error.message);
+                console.log(`Couldn't click using selector ${sel}:`, error.message);
             }
         }
 
-        // Fallback to AI OCR if selectors fail
         if (!found) {
-            spinner.text = '🔎 Không tìm thấy nút bằng selector, đang sử dụng AI OCR...';
+            spinner.text = '🔎 No selector found, using AI OCR...';
             found = await autoClickByText(page);
         }
 
         if (!found) {
-            throw new Error("Không thể tìm thấy nút Download");
+            throw new Error("Couldn't find Download button");
         }
 
         await new Promise(r => setTimeout(r, 2000));
         const downloadWithoutLicenseButton = await page.$('[data-testid="download-without-license-button"]');
         if (!downloadWithoutLicenseButton) {
-            throw new Error("Không tìm thấy nút 'Download without license'");
+            throw new Error("Couldn't find 'Download without license' button");
         }
 
         await page.setRequestInterception(true);
@@ -190,7 +198,7 @@ async function clickAndDownload(page) {
             if (requestUrl.includes('https://') && response.request().resourceType() === 'document') {
                 downloadLink = requestUrl;
                 clipboardy.writeSync(downloadLink);
-                spinner.succeed(`✅ Link tải: ${downloadLink}`);
+                spinner.succeed(`✅ Download link: ${downloadLink}`);
             }
         };
 
@@ -212,7 +220,7 @@ async function clickAndDownload(page) {
 
         return downloadLink;
     } catch (error) {
-        spinner.fail(`❌ Lỗi khi tải xuống: ${error.message}`);
+        spinner.fail(`❌ Download error: ${error.message}`);
         throw error;
     } finally {
         try {
@@ -220,7 +228,7 @@ async function clickAndDownload(page) {
             if (requestListener) page.off('request', requestListener);
             await page.setRequestInterception(false);
         } catch (cleanupError) {
-            console.error('Lỗi khi dọn dẹp:', cleanupError);
+            console.error('Cleanup error:', cleanupError);
         }
         spinner.stop();
     }
@@ -228,7 +236,7 @@ async function clickAndDownload(page) {
 
 async function getDownloadLink(productUrl) {
     const progress = new cliProgress.SingleBar({
-        format: '🚀 Đang xử lý: [{bar}] {percentage}% | {value}/{total} bước',
+        format: '🚀 Processing: [{bar}] {percentage}% | {value}/{total} steps',
         barCompleteChar: '█',
         barIncompleteChar: '-',
         hideCursor: true
@@ -243,7 +251,10 @@ async function getDownloadLink(productUrl) {
         console.log(`Product hash: ${hash}`);
         progress.increment();
 
-        await page.goto(productUrl, { waitUntil: 'domcontentloaded', timeout: 60000 });
+        await page.goto(productUrl, { 
+            waitUntil: 'domcontentloaded', 
+            timeout: 60000 
+        });
         progress.increment();
 
         const link = await clickAndDownload(page);
@@ -268,11 +279,11 @@ async function processQueue() {
         if (downloadLink) {
             res.send(downloadLink);
         } else {
-            res.send('❌ Không tìm thấy link tải.');
+            res.send('❌ No download link found.');
         }
     } catch (err) {
-        console.error("❌ Lỗi khi xử lý:", err);
-        res.status(500).send('❌ Có lỗi xảy ra trong quá trình xử lý.');
+        console.error("❌ Processing error:", err);
+        res.status(500).send('❌ An error occurred during processing.');
     } finally {
         isProcessing = false;
         processQueue();
@@ -282,7 +293,7 @@ async function processQueue() {
 app.get('/getlink', (req, res) => {
     const productUrl = req.query.url;
     if (!productUrl) {
-        return res.status(400).send('❌ Thiếu tham số ?url=');
+        return res.status(400).send('❌ Missing ?url parameter');
     }
 
     requestQueue.push({ productUrl, res });
@@ -290,29 +301,31 @@ app.get('/getlink', (req, res) => {
 });
 
 (async () => {
-    browser = await puppeteer.launch({ 
-        headless: true, 
-        args: [
-            '--no-sandbox', 
-            '--disable-setuid-sandbox',
-            '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
-        ] 
-    });
-    
-    page = await browser.newPage();
-    
-    // Thiết lập chế độ mobile với thông số iPhone X
-    await page.emulate({
+    // Mobile configuration for iPhone 12
+    const mobileDevice = {
         viewport: {
-            width: 375,
-            height: 812,
+            width: 390,
+            height: 844,
             deviceScaleFactor: 3,
             isMobile: true,
             hasTouch: true,
             isLandscape: false
         },
-        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 15_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/15.0 Mobile/15E148 Safari/604.1'
+    };
+
+    browser = await puppeteer.launch({ 
+        headless: false,
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            `--user-agent=${mobileDevice.userAgent}`
+        ],
+        protocolTimeout: 60000
     });
+    
+    page = await browser.newPage();
+    await page.emulate(mobileDevice);
 
     const loggedIn = await loginIfNeeded(page);
     if (!loggedIn) {
@@ -321,7 +334,7 @@ app.get('/getlink', (req, res) => {
     }
 
     app.listen(port, () => {
-        console.log(`🚀 Server lắng nghe tại http://localhost:${port}`);
+        console.log(`🚀 Server running at http://localhost:${port} (Mobile Mode)`);
     });
 
     process.on('SIGINT', async () => {
