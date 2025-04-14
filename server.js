@@ -5,7 +5,7 @@ const StealthPlugin = require('puppeteer-extra-plugin-stealth');
 const clipboardy = require('clipboardy');
 const crypto = require('crypto');
 const url = require('url');
-const ora = require('ora');
+const ora = require('ora').default;
 const cliProgress = require('cli-progress');
 const sharp = require('sharp');
 const Tesseract = require('tesseract.js');
@@ -290,9 +290,29 @@ app.get('/getlink', (req, res) => {
 });
 
 (async () => {
-    browser = await puppeteer.launch({ headless: true, args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+    browser = await puppeteer.launch({ 
+        headless: false, 
+        args: [
+            '--no-sandbox', 
+            '--disable-setuid-sandbox',
+            '--user-agent=Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+        ] 
+    });
+    
     page = await browser.newPage();
-    await page.setViewport({ width: 1280, height: 800 });
+    
+    // Thiết lập chế độ mobile với thông số iPhone X
+    await page.emulate({
+        viewport: {
+            width: 375,
+            height: 812,
+            deviceScaleFactor: 3,
+            isMobile: true,
+            hasTouch: true,
+            isLandscape: false
+        },
+        userAgent: 'Mozilla/5.0 (iPhone; CPU iPhone OS 13_2_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/13.0.3 Mobile/15E148 Safari/604.1'
+    });
 
     const loggedIn = await loginIfNeeded(page);
     if (!loggedIn) {
