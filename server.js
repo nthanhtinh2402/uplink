@@ -1,13 +1,14 @@
-require('dotenv').config();
-const express = require('express');
-const puppeteer = require('puppeteer-extra');
-const StealthPlugin = require('puppeteer-extra-plugin-stealth');
-const crypto = require('crypto');
-const url = require('url');
-const ora = require('ora');
-const cliProgress = require('cli-progress');
-const sharp = require('sharp');
-const Tesseract = require('tesseract.js');
+import 'dotenv/config';  // Thay cho require('dotenv').config();
+import express from 'express';
+import puppeteer from 'puppeteer-extra';
+import StealthPlugin from 'puppeteer-extra-plugin-stealth';
+import clipboardy from 'clipboardy';
+import crypto from 'crypto';
+import url from 'url';
+import ora from 'ora';
+import cliProgress from 'cli-progress';
+import sharp from 'sharp';
+import Tesseract from 'tesseract.js';
 
 puppeteer.use(StealthPlugin());
 
