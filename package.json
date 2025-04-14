@@ -2,40 +2,25 @@
   "name": "getlink_envato",
   "version": "1.0.0",
   "main": "index.js",
-  "type": "module",  
+  "type": "module",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
     "start": "node server.js"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "@distube/ytdl-core": "^4.16.8",
     "axios": "^1.8.4",
-    "cli-progress": "^3.12.0",
-    "clipboardy": "^2.3.0",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-rate-limit": "^7.5.0",
-    "inquirer": "^9.3.7",
-    "minimist": "^1.2.8",
-    "open": "^10.1.0",
     "ora": "^8.2.0",
     "p-queue": "^8.1.0",
-    "progress": "^2.0.3",
     "puppeteer": "^24.6.1",
     "puppeteer-cluster": "^0.24.0",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2",
-    "qs": "^6.14.0",
-    "readline-sync": "^1.4.10",
-    "sharp": "^0.34.1",
-    "tesseract.js": "^6.0.1",
-    "ytdl-core": "^4.11.5"
-  },
-  "devDependencies": {
-    "electron": "^35.0.1"
+    "qs": "^6.14.0"
   },
   "description": ""
 }
